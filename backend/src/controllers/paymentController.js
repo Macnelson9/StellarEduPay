@@ -936,15 +936,26 @@ async function getPaymentLimitsEndpoint(req, res, next) {
 
 async function getOverpayments(req, res, next) {
   try {
-    const overpayments = await Payment.find({
-      schoolId: req.schoolId,
-      feeValidationStatus: "overpaid",
-    }).sort({ confirmedAt: -1 });
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+    const skip = (page - 1) * limit;
+
+    const filter = { schoolId: req.schoolId, feeValidationStatus: "overpaid" };
+    const [total, overpayments] = await Promise.all([
+      Payment.countDocuments(filter),
+      Payment.find(filter).sort({ confirmedAt: -1 }).skip(skip).limit(limit),
+    ]);
+
     const totalExcess = overpayments.reduce(
       (sum, p) => sum + (p.excessAmount || 0),
       0,
     );
-    res.json({ count: overpayments.length, totalExcess, overpayments });
+    res.json({
+      count: overpayments.length,
+      totalExcess,
+      overpayments,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
