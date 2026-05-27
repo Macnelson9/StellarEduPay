@@ -13,6 +13,7 @@ const paymentEvents = require("../events/paymentEvents");
 async function savePayment(data) {
   const exists = await Payment.findOne({
     transactionHash: data.transactionHash,
+    deletedAt: null,
   });
   if (exists) {
     const err = new Error(
@@ -53,7 +54,7 @@ async function savePayment(data) {
  * Retrieve all payments for a given student, sorted by most recent first.
  */
 async function getPaymentsByStudent(studentId) {
-  return Payment.find({ studentId }).sort({ confirmedAt: -1 }).lean();
+  return Payment.find({ studentId, deletedAt: null }).sort({ confirmedAt: -1 }).lean();
 }
 
 module.exports = { savePayment, getPaymentsByStudent };

@@ -171,7 +171,7 @@ class ConcurrentPaymentProcessor {
     this.activeCount++;
     try {
       // Duplicate transaction
-      const existingPayment = await Payment.findOne({ txHash });
+      const existingPayment = await Payment.findOne({ txHash, deletedAt: null });
       if (existingPayment) {
         logger.warn("[PaymentProcessor] Duplicate transaction", { txHash });
         const result = new PaymentProcessingResult(true, {

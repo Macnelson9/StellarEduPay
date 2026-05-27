@@ -40,7 +40,7 @@ async function processTransactionJob(job) {
   );
 
   // Skip if already recorded
-  const existing = await Payment.findOne({ txHash, schoolId });
+  const existing = await Payment.findOne({ txHash, schoolId, deletedAt: null });
   if (existing) {
     logger.info('[TxQueueService] Transaction already processed, skipping', { txHash });
     await markResolved(txHash);

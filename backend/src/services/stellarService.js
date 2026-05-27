@@ -123,6 +123,7 @@ async function detectMemoCollision(
     studentId: memo,
     senderAddress: { $ne: senderAddress, $exists: true, $ne: null },
     confirmedAt: { $gte: windowStart },
+    deletedAt: null,
   });
 
   if (recentFromOtherSender) {
@@ -169,6 +170,7 @@ async function detectAbnormalPatterns(
       schoolId,
       senderAddress,
       confirmedAt: { $gte: windowStart },
+      deletedAt: null,
     });
     if (recentCount >= RAPID_TX_LIMIT) {
       reasons.push(
@@ -345,7 +347,7 @@ async function syncPaymentsForSchool(school) {
     for (const tx of page.records) {
       summary.found++;
 
-      const existing = await Payment.findOne({ txHash: tx.hash });
+      const existing = await Payment.findOne({ txHash: tx.hash, deletedAt: null });
       if (existing) { summary.alreadyProcessed++; done = true; break; }
 
       summary.new++;
@@ -429,7 +431,7 @@ async function syncPaymentsForSchool(school) {
       );
 
       const previousPayments = await Payment.aggregate([
-        { $match: { schoolId, studentId: intent.studentId } },
+        { $match: { schoolId, studentId: intent.studentId, deletedAt: null } },
         { $group: { _id: null, total: { $sum: "$amount" } } },
       ]);
       const previousTotal = previousPayments.length
@@ -506,6 +508,7 @@ async function syncPaymentsForSchool(school) {
                   feeCategory: intent.feeCategory,
                   confirmationStatus: "confirmed",
                   isSuspicious: false,
+                  deletedAt: null,
                 },
               },
               { $group: { _id: null, total: { $sum: "$amount" } } },

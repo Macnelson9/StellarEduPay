@@ -840,11 +840,13 @@ async function getStudentPayments(req, res, next) {
     const total = await Payment.countDocuments({
       schoolId: req.schoolId,
       studentId: req.params.studentId,
+      deletedAt: null,
     });
 
     const payments = await Payment.find({
       schoolId: req.schoolId,
       studentId: req.params.studentId,
+      deletedAt: null,
     })
       .sort({ confirmedAt: -1 })
       .skip(skip)
@@ -943,7 +945,7 @@ async function getStudentBalance(req, res, next) {
         .json({ error: "Student not found", code: "NOT_FOUND" });
 
     const result = await Payment.aggregate([
-      { $match: { schoolId, studentId } },
+      { $match: { schoolId, studentId, deletedAt: null } },
       {
         $group: {
           _id: null,
@@ -986,7 +988,7 @@ async function getStudentBalance(req, res, next) {
     if (student.fees && student.fees.length > 0) {
       // Get payments grouped by fee category
       const categoryPayments = await Payment.aggregate([
-        { $match: { schoolId, studentId, feeCategory: { $ne: null } } },
+        { $match: { schoolId, studentId, feeCategory: { $ne: null }, deletedAt: null } },
         {
           $group: {
             _id: "$feeCategory",
@@ -1162,7 +1164,7 @@ async function getAllPayments(req, res, next) {
       isSuspicious,
     } = req.query;
 
-    const filter = { schoolId, studentDeleted: { $ne: true } };
+    const filter = { schoolId, studentDeleted: { $ne: true }, deletedAt: null };
 
     if (startDate || endDate) {
       filter.confirmedAt = {};

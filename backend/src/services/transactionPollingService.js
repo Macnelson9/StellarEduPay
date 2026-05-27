@@ -30,7 +30,7 @@ async function processTransaction(tx, school) {
   const { schoolId, stellarAddress } = school;
 
   // Skip if already processed
-  const existing = await Payment.findOne({ txHash: tx.hash });
+  const existing = await Payment.findOne({ txHash: tx.hash, deletedAt: null });
   if (existing) {
     return { processed: false, reason: 'duplicate' };
   }
@@ -78,7 +78,7 @@ async function processTransaction(tx, school) {
 
   // Calculate cumulative totals
   const previousPayments = await Payment.aggregate([
-    { $match: { schoolId, studentId: memo, confirmationStatus: 'confirmed', isSuspicious: false } },
+    { $match: { schoolId, studentId: memo, confirmationStatus: 'confirmed', isSuspicious: false, deletedAt: null } },
     { $group: { _id: null, total: { $sum: '$amount' } } },
   ]);
   const previousTotal = previousPayments.length ? previousPayments[0].total : 0;
